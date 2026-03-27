@@ -9,20 +9,18 @@ import ChainDetail from "@/components/dashboard/attack-chains/ChainDetail"
 import AnimatedGraphSection from "@/components/dashboard/attack-chains/AnimatedGraphSection"
 import EmptyState from "@/components/dashboard/EmptyState"
 import { ChainsPageSkeleton } from "@/components/dashboard/attack-chains/ChainSkeletons"
-import { apiFetch } from "@/lib/api"
+import { getScanChains } from "@/lib/api"
 
 interface Chain {
   id: string
+  chain_id: string
   chain_index: number
   title: string
-  summary?: string
+  computer: string
   chain_confidence: number
   kill_chain_phases: string[]
   affected_users: string[]
   affected_hosts: string[]
-  session_duration_minutes?: number
-  first_event_time?: string
-  last_event_time?: string
 }
 
 export default function AttackChainsPage() {
@@ -37,10 +35,21 @@ export default function AttackChainsPage() {
   }, [id])
 
   const loadChains = async () => {
+    if (!id) return
     setLoading(true)
     try {
-      const data = await apiFetch(`/api/v1/analyses/${id}/chains`)
-      const chainData = data.data || []
+      const data = await getScanChains(id as string)
+      const chainData = (data.chains || []).map((ch: any, idx: number) => ({
+        id: ch.chain_id,
+        chain_id: ch.chain_id,
+        chain_index: idx + 1,
+        title: ch.chain_sequence,
+        computer: ch.computer,
+        chain_confidence: 0.9,
+        kill_chain_phases: [],
+        affected_users: [],
+        affected_hosts: [ch.computer]
+      }))
       setChains(chainData)
       if (chainData.length > 0) {
         setSelectedChain(chainData[0])

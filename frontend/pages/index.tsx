@@ -4,19 +4,17 @@ import { motion } from "framer-motion"
 import DashboardLayout from "@/components/layout/DashboardLayout"
 import UploadZone from "@/components/dashboard/UploadZone"
 import { CheckCircle, XCircle, Loader2, Trash2, BarChart3, AlertTriangle } from "lucide-react"
-import { uploadFile, apiFetch, connectWebSocket } from "@/lib/api"
+import { uploadFile, listScans, connectWebSocket, apiFetch } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 interface Analysis {
-  id: string
-  filename: string
-  file_size_bytes: number
-  status: string
-  progress: number
-  total_events: number
-  total_findings: number
+  scan_id: string
+  file_name: string
+  total_logs: number
+  total_threats: number
   risk_score: number
-  created_at: string
+  generated_at: string
+  status?: string // Optional, default to 'completed' for now
 }
 
 export default function HomePage() {
@@ -32,8 +30,8 @@ export default function HomePage() {
 
   const loadAnalyses = async () => {
     try {
-      const data = await apiFetch("/api/v1/analyses")
-      setAnalyses(data.data || [])
+      const data = await listScans()
+      setAnalyses(data.scans || [])
     } catch (err) {
       console.error("Failed to load analyses:", err)
     } finally {
@@ -47,18 +45,10 @@ export default function HomePage() {
 
     try {
       const result = await uploadFile(file)
-
-      const ws = connectWebSocket(result.id, (msg) => {
-        if (msg.type === "progress") {
-          setUploadProgress(msg.progress || 0)
-        }
-        if (msg.type === "complete" || msg.type === "error") {
-          loadAnalyses()
-          setUploading(false)
-        }
-      })
-
+      // Since new /upload is synchronous, we no longer need the websocket here
+      // but we can still refresh the list to show the new item
       loadAnalyses()
+      setUploading(false)
     } catch (err: any) {
       alert(`Upload failed: ${err.message}`)
       setUploading(false)
@@ -68,7 +58,7 @@ export default function HomePage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this analysis?")) return
     try {
-      await apiFetch(`/api/v1/analyses/${id}`, { method: "DELETE" })
+      await apiFetch(`/scans/${id}`, { method: "DELETE" })
       loadAnalyses()
     } catch (err: any) {
       alert(`Delete failed: ${err.message}`)
@@ -126,23 +116,23 @@ export default function HomePage() {
           ) : (
             <div className="space-y-3">
               {analyses.map((analysis, index) => {
-                const statusConfig = getStatusConfig(analysis.status)
+                const statusConfig = getStatusConfig(analysis.status || "completed")
                 const StatusIcon = statusConfig.icon
 
                 return (
                   <motion.div
-                    key={analysis.id}
+                    key={analysis.scan_id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     onClick={() => {
-                      if (analysis.status === "completed") {
-                        router.push(`/analysis/${analysis.id}`)
+                      if (analysis.status !== "failed" && analysis.scan_id) {
+                        router.push(`/analysis/${analysis.scan_id}`)
                       }
                     }}
                     className={cn(
                       "bg-zinc-900 border border-zinc-800 p-4 transition-colors duration-150",
-                      analysis.status === "completed"
+                      analysis.status !== "failed"
                         ? "cursor-pointer hover:border-zinc-700"
                         : "cursor-default"
                     )}
@@ -156,54 +146,40 @@ export default function HomePage() {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{analysis.filename}</p>
+                        <p className="text-sm font-medium text-white truncate">{analysis.file_name}</p>
                         <p className="text-xs text-zinc-500">
-                          {formatBytes(analysis.file_size_bytes)} · {new Date(analysis.created_at).toLocaleDateString()}
+                          {analysis.total_logs.toLocaleString()} logs · {new Date(analysis.generated_at).toLocaleDateString()}
                         </p>
                       </div>
 
-                      {/* Stats or Progress */}
-                      {analysis.status === "completed" ? (
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <div className="flex items-center gap-1.5">
-                              <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
-                              <span className="text-sm font-medium text-white">{analysis.total_findings}</span>
-                            </div>
-                            <p className="text-[10px] text-zinc-500">findings</p>
+                      {/* Stats */}
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <div className="flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
+                            <span className="text-sm font-medium text-white">{analysis.total_threats}</span>
                           </div>
-                          <div className="text-right">
-                            <span className={cn(
-                              "text-sm font-bold",
-                              (analysis.risk_score || 0) >= 0.8 ? "text-red-400" :
-                              (analysis.risk_score || 0) >= 0.5 ? "text-orange-400" : "text-green-400"
-                            )}>
-                              {Math.round((analysis.risk_score || 0) * 100)}%
-                            </span>
-                            <p className="text-[10px] text-zinc-500">risk</p>
-                          </div>
+                          <p className="text-[10px] text-zinc-500">findings</p>
                         </div>
-                      ) : analysis.status === "failed" ? (
-                        <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1" style={{ borderRadius: "4px" }}>
-                          Failed
-                        </span>
-                      ) : (
-                        <div className="w-24">
-                          <div className="h-1.5 bg-zinc-800 overflow-hidden" style={{ borderRadius: "4px" }}>
-                            <div
-                              className="h-full bg-blue-500 transition-all duration-300"
-                              style={{ width: `${analysis.progress}%`, borderRadius: "4px" }}
-                            />
-                          </div>
-                          <p className="text-[10px] text-zinc-500 text-center mt-1">{analysis.progress}%</p>
+                        <div className="text-right">
+                          <span className={cn(
+                            "text-sm font-bold",
+                            (analysis.risk_score || 0) >= 8000 ? "text-red-400" :
+                            (analysis.risk_score || 0) >= 5000 ? "text-orange-400" : "text-green-400"
+                          )}>
+                            {Math.round((analysis.risk_score || 0) / 100)}%
+                          </span>
+                          <p className="text-[10px] text-zinc-500">risk</p>
                         </div>
-                      )}
+                      </div>
 
                       {/* Delete */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDelete(analysis.id)
+                          if (analysis.scan_id) {
+                            handleDelete(analysis.scan_id)
+                          }
                         }}
                         className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                         style={{ borderRadius: "6px" }}

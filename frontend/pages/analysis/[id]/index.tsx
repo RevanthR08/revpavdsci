@@ -7,19 +7,16 @@ import ThreatLevel from "@/components/dashboard/ThreatLevel"
 import FindingsTable from "@/components/dashboard/findings/FindingsTable"
 import AttackChains from "@/components/dashboard/attack-chains/AttackChains"
 import Charts from "@/components/dashboard/Charts"
-import { apiFetch } from "@/lib/api"
+import { getScan, getScanCategories, getScanEvents, getScanChains } from "@/lib/api"
 
 interface Analysis {
-  id: string
-  filename: string
-  status: string
-  progress: number
-  total_events: number
-  total_findings: number
-  total_anomalies: number
-  total_attack_chains: number
+  scan_id: string
+  file_name: string
+  generated_at: string
+  total_logs: number
+  total_threats: number
+  attack_chain_count: number
   risk_score: number
-  created_at: string
 }
 
 interface FindingStats {
@@ -76,19 +73,56 @@ export default function DashboardPage() {
   }, [id])
 
   const loadData = async () => {
+    if (!id) return
     try {
-      const [analysisData, statsData, findingsData, chainsData] = await Promise.all([
-        apiFetch(`/api/v1/analyses/${id}`),
-        apiFetch(`/api/v1/analyses/${id}/findings/stats`),
-        apiFetch(`/api/v1/analyses/${id}/findings?limit=10`),
-        apiFetch(`/api/v1/analyses/${id}/chains`),
+      const scanId = id as string
+      const [analysisData, categoriesData, eventsData, chainsData] = await Promise.all([
+        getScan(scanId),
+        getScanCategories(scanId),
+        getScanEvents(scanId, { limit: 10 }),
+        getScanChains(scanId),
       ])
+
       setAnalysis(analysisData)
-      setStats(statsData)
-      setFindings(findingsData.data || [])
-      setChains(chainsData.data || [])
+
+      // Transform categories to the stats format used by existing UI
+      const bySeverity: Record<string, number> = {}
+      const byType: Record<string, number> = {}
+      
+      categoriesData.categories?.forEach((cat: any) => {
+        const severity = cat.risk_score >= 9 ? "critical" : cat.risk_score >= 7 ? "high" : cat.risk_score >= 4 ? "medium" : "low"
+        bySeverity[severity] = (bySeverity[severity] || 0) + cat.event_count
+        byType[cat.tactic || "unspecified"] = (byType[cat.tactic || "unspecified"] || 0) + cat.event_count
+      })
+
+      setStats({
+        total: analysisData.total_threats,
+        by_severity: bySeverity,
+        by_type: byType
+      })
+
+      // Map new event fields to the Finding interface
+      setFindings((eventsData.events || []).map((ev: any) => ({
+        id: ev.event_id,
+        severity: "high", // Defaulting for visual consistency
+        title: ev.category,
+        detection_type: "ml_anomaly",
+        affected_users: ev.user_account ? [ev.user_account] : []
+      })))
+
+      // Map chains
+      setChains((chainsData.chains || []).map((ch: any) => ({
+        id: ch.chain_id,
+        chain_index: 0,
+        title: ch.chain_sequence,
+        chain_confidence: 0.9,
+        kill_chain_phases: [],
+        affected_users: [],
+        affected_hosts: [ch.computer]
+      })))
+
     } catch (err) {
-      console.error("Failed to load:", err)
+      console.error("Failed to load analysis data:", err)
     } finally {
       setLoading(false)
     }
@@ -127,50 +161,50 @@ export default function DashboardPage() {
       }))
     : []
 
-  const riskScore = Math.round((analysis.risk_score || 0) * 100)
-  const threatLevel = riskScore >= 80 ? "CRITICAL" : riskScore >= 50 ? "HIGH" : riskScore >= 20 ? "MEDIUM" : "LOW"
+  const riskScorePercentage = Math.round((analysis.risk_score || 0) / 100)
+  const threatLevel = riskScorePercentage >= 80 ? "CRITICAL" : riskScorePercentage >= 50 ? "HIGH" : riskScorePercentage >= 20 ? "MEDIUM" : "LOW"
 
   return (
-    <DashboardLayout analysisId={analysis.id}>
+    <DashboardLayout analysisId={analysis.scan_id}>
       <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-white">Analysis Overview</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            {analysis.filename} · {new Date(analysis.created_at).toLocaleDateString()}
+            {analysis.file_name} · {new Date(analysis.generated_at).toLocaleDateString()}
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Total Events"
-            value={analysis.total_events || 0}
+            title="Total Logs"
+            value={analysis.total_logs || 0}
             icon={Activity}
             color="blue"
           />
           <StatCard
-            title="Findings"
-            value={analysis.total_findings || 0}
+            title="Forensic Threats"
+            value={analysis.total_threats || 0}
             icon={AlertTriangle}
             color="orange"
           />
           <StatCard
-            title="ML Anomalies"
-            value={analysis.total_anomalies || 0}
+            title="Risk Density"
+            value={Math.round((analysis as any).threat_density) || 0}
             icon={BarChart3}
             color="purple"
           />
           <StatCard
             title="Attack Chains"
-            value={analysis.total_attack_chains || 0}
+            value={analysis.attack_chain_count || 0}
             icon={GitBranch}
             color="red"
           />
         </div>
 
         {/* Threat Level */}
-        <ThreatLevel score={riskScore} threatLevel={threatLevel} />
+        <ThreatLevel score={riskScorePercentage} threatLevel={threatLevel} />
 
         {/* Charts */}
         <Charts severityData={severityData} typeData={typeData} />

@@ -8,7 +8,7 @@ import FindingCard from "@/components/dashboard/findings/FindingCard"
 import Pagination from "@/components/dashboard/Pagination"
 import EmptyState from "@/components/dashboard/EmptyState"
 import { FindingsPageSkeleton } from "@/components/dashboard/Skeletons"
-import { apiFetch } from "@/lib/api"
+import { getScanEvents, getScanCategories } from "@/lib/api"
 
 interface Finding {
   id: string
@@ -54,21 +54,50 @@ export default function FindingsPage() {
   }, [id, page, filterSeverity, filterType])
 
   const loadData = async () => {
+    if (!id) return
     setLoading(true)
     try {
-      let url = `/api/v1/analyses/${id}/findings?page=${page}&limit=${limit}`
-      if (filterSeverity) url += `&severity=${filterSeverity}`
-      if (filterType) url += `&detection_type=${filterType}`
-
-      const [findingsData, statsData] = await Promise.all([
-        apiFetch(url),
-        apiFetch(`/api/v1/analyses/${id}/findings/stats`),
+      const scanId = id as string
+      const offset = (page - 1) * limit
+      
+      const [eventsData, categoriesData] = await Promise.all([
+        getScanEvents(scanId, { 
+          category: filterType, // Mapping 'type' filter to category for now
+          limit, 
+          offset 
+        }),
+        getScanCategories(scanId),
       ])
 
-      setFindings(findingsData.data || [])
-      setTotalFindings(findingsData.pagination?.total || 0)
-      setTotalPages(Math.ceil((findingsData.pagination?.total || 0) / limit))
-      setStats(statsData)
+      // Map event fields to Finding interface
+      const mappedFindings: Finding[] = (eventsData.events || []).map((ev: any) => ({
+        id: ev.event_id,
+        severity: "high", // Mocked for visual consistency
+        title: ev.category,
+        detection_type: "ml_anomaly",
+        affected_users: ev.user_account ? [ev.user_account] : [],
+        affected_hosts: ev.computer ? [ev.computer] : [],
+        timestamp_start: ev.time_logged,
+        details: ev
+      }))
+
+      setFindings(mappedFindings)
+      setTotalFindings(eventsData.total || 0)
+      setTotalPages(Math.ceil((eventsData.total || 0) / limit))
+
+      // Transform categories to stats for the SeverityStats component
+      const bySeverity: Record<string, number> = {}
+      categoriesData.categories?.forEach((cat: any) => {
+        const severity = cat.risk_score >= 9 ? "critical" : cat.risk_score >= 7 ? "high" : cat.risk_score >= 4 ? "medium" : "low"
+        bySeverity[severity] = (bySeverity[severity] || 0) + 1 // Count categories of this severity
+      })
+      
+      setStats({
+        total: categoriesData.count || 0,
+        by_severity: bySeverity,
+        by_type: {}
+      })
+
     } catch (err) {
       console.error("Failed to load findings:", err)
     } finally {

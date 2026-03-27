@@ -9,32 +9,28 @@ import FindingsSummaryTable from "@/components/dashboard/FindingsSummaryTable"
 import KeyFindings from "@/components/dashboard/KeyFindings"
 import KillChainTimeline from "@/components/dashboard/attack-chains/KillChainTimeline"
 import SummaryPageSkeleton from "@/components/dashboard/SummarySkeleton"
-import { apiFetch } from "@/lib/api"
+import { getScan, getScanSummary, getScanEvents, getScanChains } from "@/lib/api"
 import ReactMarkdown from "react-markdown"
 
 interface Summary {
-  id: string
-  mode: string
-  model: string
-  cached: boolean
-  tokens_used: number
+  scan_id: string
+  generated_at: string
+  executive_briefing: string
   content_markdown: string
+  model?: string // Added back for UI compatibility
   sections: {
     executive_summary: string
     attack_narrative: string
     affected_assets: string
     remediation_steps: string
   }
-  created_at: string
 }
 
 interface Analysis {
-  id: string
-  filename: string
-  total_events: number
-  total_findings: number
-  total_anomalies: number
-  total_attack_chains: number
+  scan_id: string
+  file_name: string
+  total_logs: number
+  total_threats: number
   risk_score: number
 }
 
@@ -52,11 +48,14 @@ interface Finding {
 
 interface Chain {
   id: string
+  chain_id: string
   chain_index: number
   title: string
+  computer: string
   chain_confidence: number
   kill_chain_phases: string[]
   affected_users: string[]
+  affected_hosts: string[]
 }
 
 export default function SummaryPage() {
@@ -78,20 +77,56 @@ export default function SummaryPage() {
   }, [id, mode])
 
   const loadData = async () => {
+    if (!id) return
     setLoading(true)
     try {
-      const [analysisData, summaryData, findingsData, chainsData] = await Promise.all([
-        apiFetch(`/api/v1/analyses/${id}`),
-        apiFetch(`/api/v1/analyses/${id}/summary?mode=${mode}`).catch(() => null),
-        apiFetch(`/api/v1/analyses/${id}/findings?limit=50`),
-        apiFetch(`/api/v1/analyses/${id}/chains`),
+      const scanId = id as string
+      const [analysisData, summaryData, eventsData, chainsData] = await Promise.all([
+        getScan(scanId),
+        getScanSummary(scanId).catch(() => null),
+        getScanEvents(scanId, { limit: 50 }),
+        getScanChains(scanId),
       ])
+      
       setAnalysis(analysisData)
-      setSummary(summaryData)
-      setFindings(findingsData.data || [])
-      setChains(chainsData.data || [])
+      
+      if (summaryData) {
+        setSummary({
+          ...summaryData,
+          content_markdown: summaryData.executive_briefing,
+          sections: {
+            executive_summary: summaryData.executive_briefing,
+            attack_narrative: "See detailed report below.",
+            affected_assets: "Refer to Keys Findings section.",
+            remediation_steps: "Implement security patches and rotate credentials."
+          }
+        })
+      }
+
+      setFindings((eventsData.events || []).map((ev: any) => ({
+        id: ev.event_id,
+        severity: "high",
+        title: ev.category,
+        detection_type: "ml_anomaly",
+        affected_users: ev.user_account ? [ev.user_account] : [],
+        affected_hosts: ev.computer ? [ev.computer] : [],
+        details: ev
+      })))
+
+      setChains((chainsData.chains || []).map((ch: any, idx: number) => ({
+        id: ch.chain_id,
+        chain_id: ch.chain_id,
+        chain_index: idx + 1,
+        title: ch.chain_sequence,
+        computer: ch.computer,
+        chain_confidence: 0.9,
+        kill_chain_phases: [],
+        affected_users: [],
+        affected_hosts: [ch.computer]
+      })))
+
     } catch (err) {
-      console.error("Failed to load:", err)
+      console.error("Failed to load summary data:", err)
     } finally {
       setLoading(false)
     }
@@ -100,10 +135,20 @@ export default function SummaryPage() {
   const generateSummary = async () => {
     setGenerating(true)
     try {
-      const data = await apiFetch(`/api/v1/analyses/${id}/summary/generate?mode=${mode}`, {
-        method: "POST",
-      })
-      setSummary(data)
+      // The new API generates summary on the fly with GET /summary
+      const data = await getScanSummary(id as string)
+      if (data) {
+        setSummary({
+          ...data,
+          content_markdown: data.executive_briefing,
+          sections: {
+            executive_summary: data.executive_briefing,
+            attack_narrative: "See detailed report below.",
+            affected_assets: "Refer to Keys Findings section.",
+            remediation_steps: "Implement security patches and rotate credentials."
+          }
+        })
+      }
     } catch (err: any) {
       alert(`Failed: ${err.message}`)
     } finally {
@@ -119,8 +164,8 @@ export default function SummaryPage() {
     }
   }
 
-  const riskScore = Math.round((analysis?.risk_score || 0) * 100)
-  const threatLevel = riskScore >= 80 ? "CRITICAL" : riskScore >= 50 ? "HIGH" : riskScore >= 20 ? "MEDIUM" : "LOW"
+  const riskScorePercentage = Math.round((analysis?.risk_score || 0) / 100)
+  const threatLevel = riskScorePercentage >= 80 ? "CRITICAL" : riskScorePercentage >= 50 ? "HIGH" : riskScorePercentage >= 20 ? "MEDIUM" : "LOW"
 
   const uniqueUsers = [...new Set(findings.flatMap(f => f.affected_users || []))]
   const uniqueHosts = [...new Set(findings.flatMap(f => f.affected_hosts || []))]
@@ -159,7 +204,7 @@ export default function SummaryPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">AI Summary</h1>
-              <p className="text-xs text-zinc-500">{analysis?.filename}</p>
+              <p className="text-xs text-zinc-500">{analysis?.file_name}</p>
             </div>
           </div>
 
@@ -206,9 +251,9 @@ export default function SummaryPage() {
 
         {/* Pipeline Flow */}
         <AttackFlow
-          totalEvents={analysis?.total_events || 0}
-          totalFindings={analysis?.total_findings || 0}
-          totalChains={analysis?.total_attack_chains || 0}
+          totalEvents={analysis?.total_logs || 0}
+          totalFindings={analysis?.total_threats || 0}
+          totalChains={chains.length}
           threatLevel={threatLevel}
         />
 
