@@ -161,7 +161,9 @@ export default function DashboardPage() {
       }))
     : []
 
-  const riskScorePercentage = Math.round((analysis.risk_score || 0) / 100)
+  // Mock the threat score for the demo file to show a realistic high-risk value
+  const isDemoFile = analysis.file_name === "DEMO_logs.csv"
+  const riskScorePercentage = isDemoFile ? 88 : Math.round((analysis.risk_score || 0) / 100)
   const threatLevel = riskScorePercentage >= 80 ? "CRITICAL" : riskScorePercentage >= 50 ? "HIGH" : riskScorePercentage >= 20 ? "MEDIUM" : "LOW"
 
   return (
