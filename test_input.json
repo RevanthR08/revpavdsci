@@ -1,0 +1,1 @@
+{"scan_id": "test_scan", "analysis": {"scan_id": "test_scan", "file_name": "test_logs.json"}, "findings": [{"severity": "critical", "title": "Test Finding", "detection_type": "rule"}], "summary": {"content_markdown": "# Test Summary\nThis is a test summary for PDF generation."}}

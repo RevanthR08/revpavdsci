@@ -11,9 +11,9 @@ interface EmptyStateProps {
 const configs: Record<string, { icon: LucideIcon; color: string; title: string; description: string }> = {
   "no-findings": {
     icon: ShieldCheck,
-    color: "text-green-400",
-    title: "No Threats Detected",
-    description: "The analysis completed successfully with no security findings.",
+    color: "text-emerald-300",
+    title: "No High-Risk Threats",
+    description: "Analysis finished with no elevated threat signals in this view.",
   },
   "no-results": {
     icon: Search,
@@ -23,7 +23,7 @@ const configs: Record<string, { icon: LucideIcon; color: string; title: string; 
   },
   error: {
     icon: AlertTriangle,
-    color: "text-red-400",
+    color: "text-red-300",
     title: "Unable to Load Findings",
     description: "There was an error loading the findings. Please try again.",
   },
@@ -38,10 +38,9 @@ export default function EmptyState({ type = "no-findings", title, description }:
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="flex flex-col items-center justify-center py-16 bg-zinc-900 border border-zinc-800"
-      style={{ borderRadius: "6px" }}
+      className="flex flex-col items-center justify-center py-16 panel-surface rounded-2xl"
     >
-      <div className="w-16 h-16 bg-zinc-800 flex items-center justify-center mb-4" style={{ borderRadius: "6px" }}>
+      <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mb-4">
         <Icon className={`w-8 h-8 ${config.color}`} />
       </div>
       <h3 className="text-lg font-semibold text-white mb-2">

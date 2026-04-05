@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const urlPath = Array.isArray(path) ? path.join('/') : path
   const queryString = req.url?.split('?')[1]
   
-  const targetUrl = `http://127.0.0.1:8000/${urlPath}${queryString ? `?${queryString}` : ''}`
+  const targetUrl = `https://dscibackend-v1.onrender.com/${urlPath}${queryString ? `?${queryString}` : ''}`
   
   try {
     // Forward relevant headers

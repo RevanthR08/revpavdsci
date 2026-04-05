@@ -46,13 +46,14 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        title="Previous page"
+        aria-label="Previous page"
         className={cn(
-          "flex items-center justify-center w-8 h-8 transition-colors",
+          "flex items-center justify-center w-8 h-8 transition-colors rounded",
           currentPage === 1
             ? "text-zinc-600 cursor-not-allowed"
             : "text-zinc-400 hover:text-white hover:bg-zinc-800"
         )}
-        style={{ borderRadius: "4px" }}
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -68,12 +69,11 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             <button
               onClick={() => onPageChange(page as number)}
               className={cn(
-                "flex items-center justify-center w-8 h-8 text-xs font-medium transition-colors",
+                "flex items-center justify-center w-8 h-8 text-xs font-medium transition-colors rounded",
                 currentPage === page
-                  ? "bg-blue-600 text-white"
+                  ? "bg-gradient-to-r from-cyan-500 to-orange-500 text-white"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               )}
-              style={{ borderRadius: "4px" }}
             >
               {page}
             </button>
@@ -85,13 +85,14 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        title="Next page"
+        aria-label="Next page"
         className={cn(
-          "flex items-center justify-center w-8 h-8 transition-colors",
+          "flex items-center justify-center w-8 h-8 transition-colors rounded",
           currentPage === totalPages
             ? "text-zinc-600 cursor-not-allowed"
             : "text-zinc-400 hover:text-white hover:bg-zinc-800"
         )}
-        style={{ borderRadius: "4px" }}
       >
         <ChevronRight className="w-4 h-4" />
       </button>

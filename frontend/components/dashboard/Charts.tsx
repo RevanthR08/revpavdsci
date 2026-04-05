@@ -1,22 +1,20 @@
 import React from "react"
 import { motion } from "framer-motion"
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
   Area,
   AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts"
-import { BarChart3, PieChart as PieIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { BarChart3, PieChart as PieIcon, Waves } from "lucide-react"
 
 interface ChartsProps {
   severityData: { name: string; value: number; color: string }[]
@@ -24,157 +22,110 @@ interface ChartsProps {
   timelineData?: { time: string; count: number }[]
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  Critical: "#3b3486",
-  High: "#10b981",
-  Medium: "#f8883f",
-  Low: "#3b82f6",
-  Info: "#6b7280",
-}
+const TYPE_COLORS = ["#22d3ee", "#f97316", "#a78bfa", "#34d399", "#f43f5e"]
 
-const TYPE_COLORS = ["#3b82f6", "#8b5cf6", "#ef4444", "#10b981"]
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-zinc-800 border border-zinc-700 px-3 py-2" style={{ borderRadius: "6px" }}>
-        <p className="text-xs text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold text-white">{payload[0].value}</p>
-      </div>
-    )
-  }
-  return null
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 shadow-xl">
+      <p className="text-[10px] text-zinc-500">{label}</p>
+      <p className="text-sm font-semibold text-zinc-100 mt-0.5 mono-data">{payload[0].value}</p>
+    </div>
+  )
 }
 
 export default function Charts({ severityData, typeData, timelineData }: ChartsProps) {
+  const safeSeverity = severityData.length > 0 ? severityData : [{ name: "None", value: 0, color: "#52525b" }]
+  const safeType = typeData.length > 0 ? typeData : [{ name: "None", value: 0 }]
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Severity Bar Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.4 }}
-        className="bg-zinc-900 border border-zinc-800 p-4"
-        style={{ borderRadius: "6px" }}
+        transition={{ duration: 0.25 }}
+        className="panel-surface rounded-2xl p-5"
       >
         <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="w-4 h-4 text-blue-400" />
-          <h3 className="text-sm font-semibold text-white">Findings by Severity</h3>
+          <BarChart3 className="w-4 h-4 text-cyan-300" />
+          <h3 className="text-sm font-semibold text-zinc-100">Findings by Severity</h3>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={severityData}>
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 10, fill: "#71717a" }}
-              axisLine={{ stroke: "#27272a" }}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: "#71717a" }}
-              axisLine={{ stroke: "#27272a" }}
-              tickLine={false}
-            />
+
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={safeSeverity}>
+            <CartesianGrid stroke="#27272a" strokeDasharray="4 4" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-              {severityData.map((entry, index) => (
-                <Cell key={index} fill={entry.color} />
+            <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+              {safeSeverity.map((entry, index) => (
+                <Cell key={`${entry.name}-${index}`} fill={entry.color} />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </motion.div>
+      </motion.section>
 
-      {/* Type Pie Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.5 }}
-        className="bg-zinc-900 border border-zinc-800 p-4"
-        style={{ borderRadius: "6px" }}
+        transition={{ duration: 0.25, delay: 0.05 }}
+        className="panel-surface rounded-2xl p-5"
       >
         <div className="flex items-center gap-2 mb-4">
-          <PieIcon className="w-4 h-4 text-purple-400" />
-          <h3 className="text-sm font-semibold text-white">Detection Types</h3>
+          <PieIcon className="w-4 h-4 text-orange-300" />
+          <h3 className="text-sm font-semibold text-zinc-100">Detection Types</h3>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
+
+        <ResponsiveContainer width="100%" height={220}>
           <PieChart>
-            <Pie
-              data={typeData}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
-              dataKey="value"
-              stroke="none"
-            >
-              {typeData.map((entry, index) => (
-                <Cell key={index} fill={TYPE_COLORS[index % TYPE_COLORS.length]} />
+            <Pie data={safeType} innerRadius={52} outerRadius={86} dataKey="value" stroke="none" paddingAngle={2}>
+              {safeType.map((entry, index) => (
+                <Cell key={`${entry.name}-${index}`} fill={TYPE_COLORS[index % TYPE_COLORS.length]} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="flex flex-wrap justify-center gap-3 mt-2">
-          {typeData.map((entry, index) => (
-            <div key={entry.name} className="flex items-center gap-1.5">
-              <div
-                className="w-2 h-2"
-                style={{
-                  backgroundColor: TYPE_COLORS[index % TYPE_COLORS.length],
-                  borderRadius: "2px",
-                }}
-              />
-              <span className="text-[10px] text-zinc-400">
-                {entry.name}: {entry.value}
-              </span>
-            </div>
+
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          {safeType.map((entry, index) => (
+            <span key={`${entry.name}-${index}`} className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1 text-[10px] text-zinc-300">
+              {entry.name}: {entry.value}
+            </span>
           ))}
         </div>
-      </motion.div>
+      </motion.section>
 
-      {/* Timeline Chart */}
       {timelineData && timelineData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
-          className="bg-zinc-900 border border-zinc-800 p-4 lg:col-span-2"
-          style={{ borderRadius: "6px" }}
+          transition={{ duration: 0.25, delay: 0.1 }}
+          className="panel-surface rounded-2xl p-5 lg:col-span-2"
         >
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-4 h-4 text-green-400" />
-            <h3 className="text-sm font-semibold text-white">Activity Timeline</h3>
+            <Waves className="w-4 h-4 text-emerald-300" />
+            <h3 className="text-sm font-semibold text-zinc-100">Activity Timeline</h3>
           </div>
-          <ResponsiveContainer width="100%" height={150}>
+
+          <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={timelineData}>
               <defs>
-                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <linearGradient id="timelineGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#22d3ee" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <XAxis
-                dataKey="time"
-                tick={{ fontSize: 10, fill: "#71717a" }}
-                axisLine={{ stroke: "#27272a" }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "#71717a" }}
-                axisLine={{ stroke: "#27272a" }}
-                tickLine={false}
-              />
+              <CartesianGrid stroke="#27272a" strokeDasharray="4 4" vertical={false} />
+              <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#71717a" }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke="#3b82f6"
-                fillOpacity={1}
-                fill="url(#colorCount)"
-              />
+              <Area type="monotone" dataKey="count" stroke="#22d3ee" fill="url(#timelineGradient)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
-        </motion.div>
+        </motion.section>
       )}
     </div>
   )

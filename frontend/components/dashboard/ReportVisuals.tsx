@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, Tooltip,
 } from "recharts"
-import { AlertTriangle, User, Server, Globe } from "lucide-react"
+import { User, Server, Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ReportVisualsProps {
@@ -14,11 +14,34 @@ interface ReportVisualsProps {
 }
 
 const SEVERITY_COLORS = ["#DC2626", "#D97706", "#CA8A04", "#0284C7", "#6B7280"]
+const SEVERITY_DOT_CLASSES = ["bg-red-600", "bg-orange-600", "bg-yellow-600", "bg-sky-600", "bg-zinc-500"]
+
+const SEVERITY_BADGE_CLASSES: Record<string, string> = {
+  critical: "bg-red-500 text-white",
+  high: "bg-orange-500 text-white",
+  medium: "bg-yellow-500 text-white",
+  low: "bg-blue-500 text-white",
+  info: "bg-zinc-500 text-white",
+}
+
+function getPhaseBadgeClass(phase: string): string {
+  const value = phase.toLowerCase()
+
+  if (value.includes("credential")) return "bg-red-600"
+  if (value.includes("initial")) return "bg-orange-600"
+  if (value.includes("execution")) return "bg-yellow-600"
+  if (value.includes("privilege")) return "bg-violet-600"
+  if (value.includes("persistence")) return "bg-pink-600"
+  if (value.includes("lateral")) return "bg-sky-600"
+  if (value.includes("defense")) return "bg-indigo-600"
+
+  return "bg-zinc-500"
+}
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-zinc-800 border border-zinc-700 px-3 py-2" style={{ borderRadius: "4px" }}>
+      <div className="bg-zinc-800 border border-zinc-700 px-3 py-2 rounded">
         <p className="text-xs text-zinc-300">{payload[0].name}: {payload[0].value}</p>
       </div>
     )
@@ -51,8 +74,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-zinc-800/50 border border-zinc-700/50 p-4"
-          style={{ borderRadius: "6px" }}
+          className="bg-zinc-800/50 border border-zinc-700/50 p-4 rounded-md"
         >
           <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Severity Breakdown</p>
           <ResponsiveContainer width="100%" height={150}>
@@ -66,7 +88,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
           <div className="flex flex-wrap justify-center gap-2 mt-2">
             {severityData.map((d, i) => (
               <div key={d.name} className="flex items-center gap-1">
-                <div className="w-2 h-2" style={{ backgroundColor: SEVERITY_COLORS[i], borderRadius: "2px" }} />
+                <div className={cn("w-2 h-2 rounded-[2px]", SEVERITY_DOT_CLASSES[i] || "bg-zinc-500")} />
                 <span className="text-[9px] text-zinc-400">{d.name}: {d.value}</span>
               </div>
             ))}
@@ -78,8 +100,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-zinc-800/50 border border-zinc-700/50 p-4"
-          style={{ borderRadius: "6px" }}
+          className="bg-zinc-800/50 border border-zinc-700/50 p-4 rounded-md"
         >
           <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Detection Types</p>
           <ResponsiveContainer width="100%" height={150}>
@@ -87,7 +108,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
               <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#71717a" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 9, fill: "#71717a" }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="value" fill="#6C5DD3" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="#22d3ee" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -98,8 +119,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-zinc-800/50 border border-zinc-700/50"
-        style={{ borderRadius: "6px" }}
+        className="bg-zinc-800/50 border border-zinc-700/50 rounded-md"
       >
         <div className="p-3 border-b border-zinc-700/50">
           <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Top Findings</p>
@@ -119,13 +139,9 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
                 <td className="px-3 py-2">
                   <span
                     className={cn(
-                      "text-[9px] font-bold px-1.5 py-0.5",
-                      f.severity === "critical" ? "bg-red-500 text-white" :
-                      f.severity === "high" ? "bg-orange-500 text-white" :
-                      f.severity === "medium" ? "bg-yellow-500 text-white" :
-                      "bg-blue-500 text-white"
+                      "text-[9px] font-bold px-1.5 py-0.5 rounded-[3px]",
+                      SEVERITY_BADGE_CLASSES[f.severity] || SEVERITY_BADGE_CLASSES.info
                     )}
-                    style={{ borderRadius: "3px" }}
                   >
                     {f.severity?.toUpperCase()}
                   </span>
@@ -133,7 +149,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
                 <td className="px-3 py-2 text-xs text-zinc-300 truncate max-w-[200px]">{f.title}</td>
                 <td className="px-3 py-2 text-xs text-zinc-400">{f.affected_users?.[0] || "-"}</td>
                 <td className="px-3 py-2">
-                  <span className="text-[9px] text-zinc-500 bg-zinc-700 px-1 py-0.5" style={{ borderRadius: "2px" }}>
+                  <span className="text-[9px] text-zinc-500 bg-zinc-700 px-1 py-0.5 rounded-[2px]">
                     {f.mitre_techniques?.[0] || "-"}
                   </span>
                 </td>
@@ -149,8 +165,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-zinc-800/50 border border-zinc-700/50 p-4"
-          style={{ borderRadius: "6px" }}
+          className="bg-zinc-800/50 border border-zinc-700/50 p-4 rounded-md"
         >
           <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-3">Attack Chain Flow</p>
           {chains.slice(0, 2).map((chain, ci) => (
@@ -163,19 +178,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
                 {chain.kill_chain_phases?.map((phase: string, i: number) => (
                   <React.Fragment key={i}>
                     <span
-                      className="text-[9px] font-semibold px-2 py-1 text-white"
-                      style={{
-                        borderRadius: "4px",
-                        backgroundColor:
-                          phase.includes("credential") ? "#DC2626" :
-                          phase.includes("initial") ? "#D97706" :
-                          phase.includes("execution") ? "#CA8A04" :
-                          phase.includes("privilege") ? "#7C3AED" :
-                          phase.includes("persistence") ? "#EC4899" :
-                          phase.includes("lateral") ? "#0284C7" :
-                          phase.includes("defense") ? "#6366F1" :
-                          "#6B7280"
-                      }}
+                      className={cn("text-[9px] font-semibold px-2 py-1 text-white rounded", getPhaseBadgeClass(phase))}
                     >
                       {phase.replace(/-/g, " ")}
                     </span>
@@ -195,8 +198,7 @@ export default function ReportVisuals({ findings, chains, analysis }: ReportVisu
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-zinc-800/50 border border-zinc-700/50"
-        style={{ borderRadius: "6px" }}
+        className="bg-zinc-800/50 border border-zinc-700/50 rounded-md"
       >
         <div className="p-3 border-b border-zinc-700/50">
           <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Affected Assets</p>

@@ -115,17 +115,17 @@ function buildGraph(chain: any): { nodes: GraphNode[]; edges: GraphEdge[] } {
 }
 
 const LEGEND_ITEMS = [
-  { color: "#f87171", label: "Attacker / Source" },
-  { color: "#60a5fa", label: "User account" },
-  { color: "#34d399", label: "Host / Server" },
-  { color: "#a78bfa", label: "Domain Controller" },
-  { color: "#f97316", label: "Impact / Target" },
+  { dotClass: "bg-red-400", label: "Attacker / Source" },
+  { dotClass: "bg-sky-400", label: "User account" },
+  { dotClass: "bg-emerald-400", label: "Host / Server" },
+  { dotClass: "bg-violet-400", label: "Domain Controller" },
+  { dotClass: "bg-orange-400", label: "Impact / Target" },
 ]
 
 const SEVERITY_EDGES = [
-  { color: "#f87171", label: "Critical" },
-  { color: "#f97316", label: "High" },
-  { color: "#fbbf24", label: "Medium" },
+  { lineClass: "bg-red-400", label: "Critical" },
+  { lineClass: "bg-orange-400", label: "High" },
+  { lineClass: "bg-amber-400", label: "Medium" },
 ]
 
 export default function AnimatedGraphSection({ analysisId, selectedChain }: AnimatedGraphSectionProps) {
@@ -152,45 +152,38 @@ export default function AnimatedGraphSection({ analysisId, selectedChain }: Anim
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="overflow-hidden"
-      style={{ borderRadius: "8px", backgroundColor: "#0c0c0f", border: "1px solid #27272a" }}
+      className="panel-surface rounded-2xl overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: "1px solid #27272a", backgroundColor: "#09090b" }}>
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/90 bg-zinc-950/70">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: "6px", backgroundColor: "rgba(59,130,246,0.1)" }}>
-            <Network className="w-4 h-4 text-blue-400" />
+          <div className="w-8 h-8 flex items-center justify-center rounded-md bg-cyan-500/15 border border-cyan-500/30">
+            <Network className="w-4 h-4 text-cyan-300" />
           </div>
           <div>
-            <h3 className="text-sm font-bold" style={{ color: "#ffffff" }}>Live Attack Graph</h3>
-            <p className="text-[10px]" style={{ color: "#71717a" }}>Real-time threat propagation visualization</p>
+            <h3 className="text-sm font-bold text-zinc-100">Live Attack Graph</h3>
+            <p className="text-[10px] text-zinc-500">Real-time threat propagation visualization</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* Live indicator */}
           <div className="flex items-center gap-1.5">
             <motion.span
               className="w-2 h-2 rounded-full bg-green-500"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#4ade80" }}>Live</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-green-300">Live</span>
           </div>
 
-          {/* Chain name badge */}
           {selectedChain && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 max-w-[200px]" style={{ borderRadius: "4px", backgroundColor: "#27272a", border: "1px solid #3f3f46" }}>
-              <Activity className="w-3 h-3 flex-shrink-0" style={{ color: "#c084fc" }} />
-              <span className="text-[10px] truncate" style={{ color: "#d4d4d8" }}>Chain #{selectedChain.chain_index}</span>
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 max-w-[200px] rounded border border-zinc-700 bg-zinc-900">
+              <Activity className="w-3 h-3 flex-shrink-0 text-orange-300" />
+              <span className="text-[10px] truncate text-zinc-300">Chain #{selectedChain.chain_index}</span>
             </div>
           )}
 
           <button
             onClick={handleReplay}
-            className="flex items-center gap-1.5 text-xs transition-all duration-150"
-            style={{ borderRadius: "4px", color: "#a1a1aa", padding: "6px 12px", backgroundColor: "transparent", border: "1px solid #3f3f46" }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#27272a"; e.currentTarget.style.color = "#ffffff" }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#a1a1aa" }}
+            className="flex items-center gap-1.5 text-xs transition-all duration-150 rounded border border-zinc-700 px-3 py-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Replay
@@ -198,13 +191,11 @@ export default function AnimatedGraphSection({ analysisId, selectedChain }: Anim
         </div>
       </div>
 
-      {/* Graph Canvas */}
-      <div className="relative" style={{ minHeight: "320px", backgroundColor: "#09090b" }}>
-        {/* Corner decorations */}
-        <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-blue-500/20" style={{ borderRadius: "8px 0 0 0" }} />
-        <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-blue-500/20" style={{ borderRadius: "0 8px 0 0" }} />
-        <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-blue-500/20" style={{ borderRadius: "0 0 0 8px" }} />
-        <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-blue-500/20" style={{ borderRadius: "0 0 8px 0" }} />
+      <div className="relative min-h-[320px] bg-zinc-950">
+        <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-cyan-500/20 rounded-tl-xl" />
+        <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-cyan-500/20 rounded-tr-xl" />
+        <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-cyan-500/20 rounded-bl-xl" />
+        <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-cyan-500/20 rounded-br-xl" />
 
         <AnimatePresence mode="wait">
           {graph.nodes.length > 0 ? (
@@ -233,29 +224,28 @@ export default function AnimatedGraphSection({ analysisId, selectedChain }: Anim
                 animate={{ opacity: [0.3, 0.7, 0.3] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <Network className="w-10 h-10" style={{ color: "#3f3f46" }} />
+                  <Network className="w-10 h-10 text-zinc-600" />
               </motion.div>
-              <p className="text-sm" style={{ color: "#52525b" }}>Select a chain to visualize the attack path</p>
+                <p className="text-sm text-zinc-600">Select a chain to visualize the attack path</p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Footer: Legend */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3" style={{ borderTop: "1px solid #27272a", backgroundColor: "#09090b" }}>
-        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#52525b" }}>Node Types</span>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 border-t border-zinc-800/90 bg-zinc-950/70">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Node Types</span>
         {LEGEND_ITEMS.map(item => (
           <div key={item.label} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-            <span className="text-[10px]" style={{ color: "#71717a" }}>{item.label}</span>
+              <div className={`w-2.5 h-2.5 rounded-full ${item.dotClass}`} />
+              <span className="text-[10px] text-zinc-500">{item.label}</span>
           </div>
         ))}
         <div className="ml-auto flex items-center gap-4">
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#52525b" }}>Edge Severity</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Edge Severity</span>
           {SEVERITY_EDGES.map(item => (
             <div key={item.label} className="flex items-center gap-1.5">
-              <div className="w-6 h-0.5" style={{ backgroundColor: item.color }} />
-              <span className="text-[10px]" style={{ color: "#71717a" }}>{item.label}</span>
+                <div className={`w-6 h-0.5 ${item.lineClass}`} />
+                <span className="text-[10px] text-zinc-500">{item.label}</span>
             </div>
           ))}
         </div>

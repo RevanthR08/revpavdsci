@@ -47,24 +47,21 @@ export default function ChainDetail({ chain, analysisId }: ChainDetailProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="bg-zinc-900 border border-zinc-800 h-full flex flex-col overflow-hidden"
-      style={{ borderRadius: "6px" }}
+      className="panel-surface rounded-2xl h-full flex flex-col overflow-hidden"
     >
-      {/* Header */}
       <div className="p-5 border-b border-zinc-800 flex-shrink-0">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <GitBranch className="w-5 h-5 text-purple-400" />
+            <GitBranch className="w-5 h-5 text-cyan-300" />
             <h3 className="text-base font-semibold text-white">Chain {chain.chain_index}</h3>
           </div>
           <span
             className={cn(
-              "text-sm font-semibold px-3 py-1",
+              "text-sm font-semibold px-3 py-1 rounded-full border",
               chain.chain_confidence >= 0.8 ? "text-red-400 bg-red-500/10" :
               chain.chain_confidence >= 0.5 ? "text-orange-400 bg-orange-500/10" :
               "text-yellow-400 bg-yellow-500/10"
             )}
-            style={{ borderRadius: "4px" }}
           >
             {Math.round(chain.chain_confidence * 100)}%
           </span>
@@ -72,26 +69,16 @@ export default function ChainDetail({ chain, analysisId }: ChainDetailProps) {
         <p className="text-sm text-zinc-400">{chain.title}</p>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-thin">
-        {/* Summary - max 6 lines */}
         {chain.summary && (
           <div>
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Summary</p>
-            <p
-              className="text-sm text-zinc-300 leading-relaxed overflow-hidden"
-              style={{
-                display: "-webkit-box",
-                WebkitLineClamp: 6,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
+            <p className="text-sm text-zinc-300 leading-relaxed overflow-hidden [display:-webkit-box] [-webkit-line-clamp:6] [-webkit-box-orient:vertical]">
               {chain.summary}
             </p>
           </div>
         )}
 
-        {/* Affected Entities */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Users</p>
@@ -99,10 +86,9 @@ export default function ChainDetail({ chain, analysisId }: ChainDetailProps) {
               {chain.affected_users.slice(0, 4).map((user) => (
                 <div
                   key={user}
-                  className="flex items-center gap-2.5 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50"
-                  style={{ borderRadius: "6px" }}
+                  className="flex items-center gap-2.5 px-3 py-2 bg-zinc-900/70 border border-zinc-800 rounded-md"
                 >
-                  <User className="w-4 h-4 text-blue-400" />
+                  <User className="w-4 h-4 text-sky-300" />
                   <span className="text-sm text-zinc-200">{user}</span>
                 </div>
               ))}
@@ -117,10 +103,9 @@ export default function ChainDetail({ chain, analysisId }: ChainDetailProps) {
               {chain.affected_hosts.slice(0, 4).map((host) => (
                 <div
                   key={host}
-                  className="flex items-center gap-2.5 px-3 py-2 bg-zinc-800/50 border border-zinc-700/50"
-                  style={{ borderRadius: "6px" }}
+                  className="flex items-center gap-2.5 px-3 py-2 bg-zinc-900/70 border border-zinc-800 rounded-md"
                 >
-                  <Server className="w-4 h-4 text-green-400" />
+                  <Server className="w-4 h-4 text-emerald-300" />
                   <span className="text-sm text-zinc-200">{host}</span>
                 </div>
               ))}
@@ -134,16 +119,14 @@ export default function ChainDetail({ chain, analysisId }: ChainDetailProps) {
         {/* Kill Chain Timeline */}
         <KillChainTimeline phases={chain.kill_chain_phases} />
 
-        {/* Live Attack Graph */}
-        <div className="bg-zinc-800/50 border border-zinc-700/50 p-5" style={{ borderRadius: "6px" }}>
+        <div className="panel-muted rounded-xl p-5">
           <AttackTree chain={attackTreeData} />
         </div>
 
-        {/* Timeline */}
         {chain.first_event_time && chain.last_event_time && (
           <div>
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Timeline</p>
-            <div className="flex items-center gap-4 bg-zinc-800/50 border border-zinc-700/50 p-4" style={{ borderRadius: "6px" }}>
+            <div className="flex items-center gap-4 bg-zinc-900/70 border border-zinc-800 p-4 rounded-xl">
               <div className="flex items-center gap-2 text-sm text-zinc-300">
                 <Clock className="w-4 h-4 text-zinc-500" />
                 {formatTime(chain.first_event_time)}

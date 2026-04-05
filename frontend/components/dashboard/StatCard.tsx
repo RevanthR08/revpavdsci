@@ -33,10 +33,10 @@ const colorMap = {
     value: "text-orange-400",
   },
   purple: {
-    bg: "bg-purple-500/100",
-    border: "border-purple-500/20",
-    icon: "text-purple-400",
-    value: "text-purple-400",
+    bg: "bg-cyan-500/100",
+    border: "border-cyan-500/20",
+    icon: "text-cyan-300",
+    value: "text-cyan-300",
   },
   green: {
     bg: "bg-green-500/100",
@@ -75,11 +75,10 @@ export default function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className={cn(
-        "bg-zinc-900 border p-5 cursor-pointer transition-all duration-200",
+        "bg-zinc-900 border p-5 cursor-pointer transition-all duration-200 rounded-md",
         "hover:border-zinc-700 hover:bg-zinc-900/80",
         colors.border
       )}
-      style={{ borderRadius: "6px" }}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
@@ -100,10 +99,9 @@ export default function StatCard({
         </div>
         <div
           className={cn(
-            "w-10 h-10 flex items-center justify-center",
+            "w-10 h-10 flex items-center justify-center rounded-md",
             colors.bg
           )}
-          style={{ borderRadius: "6px" }}
         >
           <Icon className={cn("w-5 h-5", colors.icon)} />
         </div>

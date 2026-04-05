@@ -22,29 +22,20 @@ export default function ExecutiveSummary({ summary, threatLevel }: ExecutiveSumm
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className={cn("border p-5", colors.bg, colors.border)}
-      style={{ borderRadius: "6px" }}
+      className={cn("border p-5 rounded-md", colors.bg, colors.border)}
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-zinc-800 flex items-center justify-center flex-shrink-0" style={{ borderRadius: "6px" }}>
+        <div className="w-10 h-10 bg-zinc-800 flex items-center justify-center flex-shrink-0 rounded-md">
           <Icon className={cn("w-5 h-5", colors.text)} />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Executive Summary</p>
-            <span className={cn("text-[10px] font-bold px-2 py-0.5", colors.bg, colors.text)} style={{ borderRadius: "4px" }}>
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded", colors.bg, colors.text)}>
               {threatLevel}
             </span>
           </div>
-          <p
-            className="text-sm text-zinc-200 leading-relaxed"
-            style={{
-              display: "-webkit-box",
-              WebkitLineClamp: 6,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
+          <p className="text-sm text-zinc-200 leading-relaxed [display:-webkit-box] [-webkit-line-clamp:6] [-webkit-box-orient:vertical] overflow-hidden">
             {summary}
           </p>
         </div>

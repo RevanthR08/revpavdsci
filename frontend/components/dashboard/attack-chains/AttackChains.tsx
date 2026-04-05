@@ -1,6 +1,6 @@
 import React from "react"
 import { motion } from "framer-motion"
-import { GitBranch, ChevronRight, User, Server, Globe } from "lucide-react"
+import { ChevronRight, GitBranch, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Chain {
@@ -18,113 +18,97 @@ interface AttackChainsProps {
   onViewAll?: () => void
 }
 
-const nodeColors: Record<string, string> = {
-  "credential-access": "bg-red-500",
-  "initial-access": "bg-orange-500",
-  "execution": "bg-yellow-500",
-  "privilege-escalation": "bg-purple-500",
-  "persistence": "bg-pink-500",
-  "defense-evasion": "bg-indigo-500",
-  "lateral-movement": "bg-blue-500",
-  "discovery": "bg-cyan-500",
-  "collection": "bg-teal-500",
-  "command-and-control": "bg-green-500",
-  "exfiltration": "bg-emerald-500",
-  "impact": "bg-rose-500",
+const phaseTone: Record<string, string> = {
+  "credential-access": "bg-red-500/20 text-red-300 border-red-500/35",
+  "initial-access": "bg-orange-500/20 text-orange-300 border-orange-500/35",
+  execution: "bg-amber-500/20 text-amber-300 border-amber-500/35",
+  "privilege-escalation": "bg-indigo-500/20 text-indigo-300 border-indigo-500/35",
+  persistence: "bg-pink-500/20 text-pink-300 border-pink-500/35",
+  "defense-evasion": "bg-indigo-500/20 text-indigo-300 border-indigo-500/35",
+  "lateral-movement": "bg-cyan-500/20 text-cyan-300 border-cyan-500/35",
+  discovery: "bg-sky-500/20 text-sky-300 border-sky-500/35",
+  collection: "bg-teal-500/20 text-teal-300 border-teal-500/35",
+  "command-and-control": "bg-green-500/20 text-green-300 border-green-500/35",
+  exfiltration: "bg-emerald-500/20 text-emerald-300 border-emerald-500/35",
+  impact: "bg-rose-500/20 text-rose-300 border-rose-500/35",
+}
+
+function prettifyPhase(phase: string) {
+  return phase.replace(/-/g, " ")
 }
 
 export default function AttackChains({ chains, onViewAll }: AttackChainsProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.3 }}
-      className="bg-zinc-900 border border-zinc-800"
-      style={{ borderRadius: "6px" }}
+      transition={{ duration: 0.25, delay: 0.05 }}
+      className="panel-surface rounded-2xl overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/80">
         <div className="flex items-center gap-2">
-          <GitBranch className="w-4 h-4 text-purple-400" />
-          <h3 className="text-sm font-bold text-white">Attack Chains</h3>
-          <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5" style={{ borderRadius: "4px" }}>
-            {chains.length}
-          </span>
+          <GitBranch className="w-4 h-4 text-cyan-300" />
+          <h3 className="text-sm font-semibold text-zinc-100">Attack Chains</h3>
+          <span className="metric-chip">{chains.length}</span>
         </div>
+
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition-colors"
+            className="text-xs text-zinc-400 hover:text-cyan-300 transition-colors inline-flex items-center gap-1"
           >
-            View All
-            <ChevronRight className="w-3 h-3" />
+            View all
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
-      {/* Chains */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-3">
         {chains.slice(0, 3).map((chain, index) => (
           <motion.div
             key={chain.id}
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="bg-zinc-800/50 border border-zinc-700/50 p-4 cursor-pointer hover:border-zinc-600/50 transition-colors"
-            style={{ borderRadius: "6px" }}
+            transition={{ duration: 0.2, delay: index * 0.04 }}
+            className="rounded-xl border border-zinc-800 bg-zinc-950/45 p-4 hover:border-zinc-700 transition-colors"
           >
-            {/* Chain Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-zinc-400" />
-                <span className="text-sm font-medium text-white">
-                  {chain.affected_users[0] || "Unknown"}
-                </span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <User className="w-4 h-4 text-zinc-500" />
+                <p className="text-sm text-zinc-200 truncate">{chain.affected_users[0] || chain.affected_hosts[0] || "Unknown actor"}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "text-xs font-medium px-2 py-0.5",
-                    chain.chain_confidence >= 0.8
-                      ? "text-red-400 bg-red-500/10"
-                      : chain.chain_confidence >= 0.5
-                      ? "text-orange-400 bg-orange-500/10"
-                      : "text-yellow-400 bg-yellow-500/10"
-                  )}
-                  style={{ borderRadius: "4px" }}
-                >
-                  {Math.round(chain.chain_confidence * 100)}%
-                </span>
-              </div>
+              <span className={cn(
+                "text-[11px] rounded-full px-2 py-1 border mono-data",
+                chain.chain_confidence >= 0.8
+                  ? "bg-red-500/15 border-red-500/35 text-red-300"
+                  : chain.chain_confidence >= 0.5
+                    ? "bg-orange-500/15 border-orange-500/35 text-orange-300"
+                    : "bg-cyan-500/15 border-cyan-500/35 text-cyan-300"
+              )}>
+                {Math.round(chain.chain_confidence * 100)}%
+              </span>
             </div>
 
-            {/* Kill Chain Phases */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {chain.kill_chain_phases.map((phase, i) => (
-                <React.Fragment key={phase}>
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {(chain.kill_chain_phases || []).slice(0, 5).map((phase, phaseIndex, list) => (
+                <React.Fragment key={`${chain.id}-${phase}`}>
                   <span
                     className={cn(
-                      "text-[10px] font-medium px-2 py-1 text-white",
-                      nodeColors[phase] || "bg-zinc-600"
+                      "rounded-md border px-2 py-1 text-[10px] capitalize",
+                      phaseTone[phase] || "bg-zinc-800 border-zinc-700 text-zinc-300"
                     )}
-                    style={{ borderRadius: "4px" }}
                   >
-                    {phase.replace("-", " ")}
+                    {prettifyPhase(phase)}
                   </span>
-                  {i < chain.kill_chain_phases.length - 1 && (
-                    <ChevronRight className="w-3 h-3 text-zinc-600" />
-                  )}
+                  {phaseIndex < list.length - 1 && <ChevronRight className="w-3 h-3 text-zinc-600" />}
                 </React.Fragment>
               ))}
             </div>
 
-            {/* Chain Title */}
-            <p className="text-xs text-zinc-400 mt-2 truncate">
-              {chain.title}
-            </p>
+            <p className="text-xs text-zinc-500 mt-2 truncate">{chain.title}</p>
           </motion.div>
         ))}
       </div>
-    </motion.div>
+    </motion.section>
   )
 }

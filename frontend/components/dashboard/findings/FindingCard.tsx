@@ -1,7 +1,8 @@
 import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown, Clock, User, Server, Globe, ExternalLink } from "lucide-react"
+import { ChevronDown, Clock, ExternalLink, Globe, Server, ShieldAlert, User, Activity, Fingerprint } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 interface Finding {
   id: string
@@ -27,227 +28,245 @@ interface FindingCardProps {
   index: number
 }
 
-const severityConfig: Record<string, { color: string; bg: string; border: string }> = {
-  critical: { color: "text-red-400", bg: "bg-red-100", border: "border-red-500" },
-  high: { color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
-  medium: { color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
-  low: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-  info: { color: "text-zinc-400", bg: "bg-zinc-500/10", border: "border-zinc-500/20" },
+const severityConfig: Record<string, { color: string, border: string, bg: string, glow: string }> = {
+  critical: { color: "text-red-400", border: "border-red-500/40", bg: "bg-red-500/10", glow: "shadow-[0_0_15px_-3px_rgba(239,68,68,0.3)]" },
+  high: { color: "text-orange-400", border: "border-orange-500/40", bg: "bg-orange-500/10", glow: "shadow-[0_0_15px_-3px_rgba(249,115,22,0.3)]" },
+  medium: { color: "text-amber-400", border: "border-amber-500/40", bg: "bg-amber-500/10", glow: "shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]" },
+  low: { color: "text-cyan-400", border: "border-cyan-500/40", bg: "bg-cyan-500/10", glow: "shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]" },
+  info: { color: "text-zinc-400", border: "border-zinc-500/30", bg: "bg-zinc-500/5", glow: "" },
 }
 
 const typeLabels: Record<string, string> = {
-  rule: "Rule",
-  ml_anomaly: "ML",
-  impossible_travel: "Travel",
+  rule: "Static Signal",
+  ml_anomaly: "Heuristic Anomaly",
+  impossible_travel: "Geo-Spatial Logic",
+  priv_esc: "Privilege Escalation",
+  persistence: "Establish Persistence",
+  lateral: "Lateral Vector",
 }
 
 export default function FindingCard({ finding, index }: FindingCardProps) {
   const [expanded, setExpanded] = useState(false)
   const sev = severityConfig[finding.severity] || severityConfig.info
 
+  const anomalyScoreRaw =
+    typeof finding.anomaly_score === "number"
+      ? finding.anomaly_score
+      : typeof finding.details?.anomaly_score === "number"
+        ? Number(finding.details?.anomaly_score)
+        : undefined
+
+  const anomalyScore =
+    typeof anomalyScoreRaw === "number"
+      ? Math.max(0, Math.min(1, anomalyScoreRaw))
+      : undefined
+
+  const riskScore =
+    typeof finding.details?.risk_score === "number"
+      ? Math.round(Number(finding.details.risk_score))
+      : undefined
+
   const formatTime = (ts?: string) => {
     if (!ts) return ""
     try {
-      return new Date(ts).toLocaleTimeString()
+      return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     } catch {
       return ts
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.03 }}
+    <motion.article
+      layout
+      transition={{ layout: { duration: 0.4, ease: [0.23, 1, 0.32, 1] } }}
       className={cn(
-        "bg-zinc-900 border transition-colors duration-150",
-        expanded ? "border-zinc-700" : "border-zinc-800 hover:border-zinc-700"
+        "group relative list-item-card rounded-[1.25rem] transition-colors duration-300",
+        expanded ? "bg-white/[0.04] border-white/20" : "hover:border-white/15"
       )}
-      style={{ borderRadius: "6px" }}
     >
-      {/* Main Row */}
-      <div
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-3 p-4 cursor-pointer"
-      >
-        {/* Severity Badge */}
-        <span
-          className={cn(
-            "inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border flex-shrink-0",
-            sev.bg,
-            sev.color,
-            sev.border
-          )}
-          style={{ borderRadius: "4px" }}
-        >
-          {finding.severity}
-        </span>
+      <div className={cn(
+        "absolute left-0 top-0 bottom-0 w-[3px] transition-opacity duration-500 opacity-60 rounded-l-[1.25rem]",
+        sev.bg.replace('/10', '/50'),
+        expanded ? "opacity-100" : "opacity-0"
+      )} />
 
-        {/* Title & Meta */}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-left flex items-center gap-6 p-5"
+      >
+        <div className={cn(
+          "h-12 w-12 rounded-xl border flex flex-col items-center justify-center flex-shrink-0 transition-all duration-500",
+          sev.bg, sev.border, sev.glow,
+          expanded && "scale-110"
+        )}>
+           <span className={cn("text-[9px] font-black uppercase tracking-tighter leading-none mb-0.5", sev.color)}>RISK</span>
+           <span className={cn("text-lg font-black leading-none mono-data", sev.color)}>{riskScore || "-"}</span>
+        </div>
+
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{finding.title}</p>
-          <div className="flex items-center gap-3 mt-1">
-            {finding.rule_id && (
-              <span className="text-[10px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5" style={{ borderRadius: "3px" }}>
-                {finding.rule_id}
-              </span>
+          <div className="flex items-center gap-2 mb-1.5 overflow-hidden">
+             <Fingerprint className="w-3 h-3 text-primary/40 flex-shrink-0" />
+             <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 whitespace-nowrap">
+                SIG::{finding.rule_id || "CORE-SIG"} · FORENSIC-BLOCK-77
+             </p>
+          </div>
+          <h3 className="text-base font-bold text-white tracking-tight leading-tight group-hover:text-primary transition-colors duration-300">
+            {finding.title}
+          </h3>
+          <div className="flex items-center gap-4 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1.5">
+               <Clock className="w-3.5 h-3.5 text-zinc-500" />
+               <span className="text-[10px] font-bold text-zinc-400 mono-data uppercase tracking-widest">{formatTime(finding.timestamp_start)}</span>
+            </div>
+            {finding.mitre_techniques?.length && (
+              <div className="flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-zinc-500" />
+                <span className="text-[10px] font-bold text-zinc-400 mono-data">{finding.mitre_techniques[0]}</span>
+              </div>
             )}
-            {finding.mitre_techniques?.slice(0, 2).map((t) => (
-              <span key={t} className="text-[10px] text-zinc-400">
-                {t}
-              </span>
-            ))}
-            {finding.timestamp_start && (
-              <span className="flex items-center gap-1 text-[10px] text-zinc-500">
-                <Clock className="w-2.5 h-2.5" />
-                {formatTime(finding.timestamp_start)}
-              </span>
-            )}
+            <span className={cn("px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border", sev.bg, sev.border, sev.color)}>
+               {finding.severity}
+            </span>
           </div>
         </div>
 
-        {/* Type Badge */}
-        <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 flex-shrink-0" style={{ borderRadius: "4px" }}>
-          {typeLabels[finding.detection_type] || finding.detection_type}
-        </span>
+        <div className="hidden sm:flex flex-col items-end gap-1 flex-shrink-0">
+           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600">Vector Status</span>
+           <Badge variant="outline" className="border-white/5 bg-white/[0.02] text-zinc-300 font-bold text-[9px] px-3 py-1 uppercase tracking-widest rounded-lg">
+             {typeLabels[finding.detection_type] || finding.detection_type}
+           </Badge>
+        </div>
 
-        {/* Expand Icon */}
+        <div className={cn(
+          "w-10 h-10 rounded-xl border border-white/[0.05] flex items-center justify-center transition-all duration-500",
+          expanded ? "bg-primary/20 border-primary/30 text-white rotate-180" : "text-zinc-500 group-hover:bg-white/5"
+        )}>
+          <ChevronDown className="w-5 h-5" />
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+      {expanded && (
         <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex-shrink-0"
+           layout
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           className="overflow-hidden border-t border-white/[0.04]"
         >
-          <ChevronDown className="w-4 h-4 text-zinc-500" />
-        </motion.div>
-      </div>
-
-      {/* Expanded Details */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-0 border-t border-zinc-800">
-              <div className="pt-4 space-y-4">
-                {/* Description */}
-                {finding.description && (
-                  <div>
-                    <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Description</p>
-                    <p className="text-sm text-zinc-300">{finding.description}</p>
-                  </div>
-                )}
-
-                {/* Affected Entities */}
-                <div className="flex gap-4">
-                  {finding.affected_users && finding.affected_users.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Users</p>
-                      <div className="flex flex-wrap gap-1">
-                        {finding.affected_users.slice(0, 5).map((u) => (
-                          <span key={u} className="flex items-center gap-1 text-xs text-zinc-300 bg-zinc-800 px-2 py-0.5" style={{ borderRadius: "4px" }}>
-                            <User className="w-3 h-3" />
-                            {u}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {finding.affected_hosts && finding.affected_hosts.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">Hosts</p>
-                      <div className="flex flex-wrap gap-1">
-                        {finding.affected_hosts.slice(0, 5).map((h) => (
-                          <span key={h} className="flex items-center gap-1 text-xs text-zinc-300 bg-zinc-800 px-2 py-0.5" style={{ borderRadius: "4px" }}>
-                            <Server className="w-3 h-3" />
-                            {h}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {finding.source_ips && finding.source_ips.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">IPs</p>
-                      <div className="flex flex-wrap gap-1">
-                        {finding.source_ips.slice(0, 5).map((ip) => (
-                          <span key={ip} className="flex items-center gap-1 text-xs text-zinc-300 bg-zinc-800 px-2 py-0.5" style={{ borderRadius: "4px" }}>
-                            <Globe className="w-3 h-3" />
-                            {ip}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+          <div className="px-6 pb-6 pt-6 space-y-8">
+              {finding.description && (
+                <div className="max-w-3xl">
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-3">Threat Context</p>
+                  <p className="text-sm font-medium text-zinc-300 leading-relaxed italic border-l-2 border-primary/30 pl-4 bg-primary/5 py-3 rounded-r-xl">{finding.description}</p>
                 </div>
+              )}
 
-                {/* MITRE ATT&CK */}
-                {finding.mitre_techniques && finding.mitre_techniques.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">MITRE ATT&CK</p>
-                    <div className="flex flex-wrap gap-1">
-                      {finding.mitre_techniques.map((t) => (
-                        <a
-                          key={t}
-                          href={`https://attack.mitre.org/techniques/${t.replace(".", "/")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 hover:bg-blue-500/20 transition-colors"
-                          style={{ borderRadius: "4px" }}
-                        >
-                          {t}
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      ))}
-                      {finding.mitre_tactics?.map((t) => (
-                        <span key={t} className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5" style={{ borderRadius: "4px" }}>
-                          {t}
-                        </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {finding.affected_users?.length && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Identity Nodes</p>
+                    <div className="flex flex-wrap gap-2">
+                      {finding.affected_users.map((u) => (
+                        <div key={u} className="flex items-center gap-2 text-[11px] font-bold text-zinc-300 bg-white/[0.03] border border-white/[0.06] px-3 py-1.5 rounded-xl hover:bg-white/[0.06] transition-colors">
+                          <User className="w-3.5 h-3.5 text-primary opacity-60" />
+                          {u}
+                        </div>
                       ))}
                     </div>
                   </div>
                 )}
-
-                {/* ML Score */}
-                {finding.anomaly_score !== undefined && finding.anomaly_score !== null && (
-                  <div>
-                    <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider mb-1">ML Analysis</p>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-zinc-800 overflow-hidden" style={{ borderRadius: "4px" }}>
-                        <div
-                          className={cn(
-                            "h-full",
-                            finding.anomaly_score >= 0.7 ? "bg-red-500" :
-                            finding.anomaly_score >= 0.4 ? "bg-orange-500" : "bg-yellow-500"
-                          )}
-                          style={{ width: `${finding.anomaly_score * 100}%`, borderRadius: "4px" }}
-                        />
-                      </div>
-                      <span className="text-xs text-zinc-300">{(finding.anomaly_score * 100).toFixed(0)}%</span>
-                      <span className="text-[10px] text-zinc-500">({finding.ml_method})</span>
+                {finding.affected_hosts?.length && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Hardware Targets</p>
+                    <div className="flex flex-wrap gap-2">
+                      {finding.affected_hosts.map((h) => (
+                        <div key={h} className="flex items-center gap-2 text-[11px] font-bold text-zinc-300 bg-white/[0.03] border border-white/[0.06] px-3 py-1.5 rounded-xl hover:bg-white/[0.06] transition-colors">
+                          <Server className="w-3.5 h-3.5 text-accent opacity-60" />
+                          {h}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-
-                {/* Raw Details (collapsible) */}
-                {finding.details && Object.keys(finding.details).length > 0 && (
-                  <details className="group">
-                    <summary className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider cursor-pointer hover:text-zinc-400 transition-colors">
-                      Raw Details
-                    </summary>
-                    <pre className="mt-2 text-[10px] text-zinc-400 bg-zinc-800/50 p-3 overflow-x-auto" style={{ borderRadius: "4px" }}>
-                      {JSON.stringify(finding.details, null, 2)}
-                    </pre>
-                  </details>
+                {finding.source_ips?.length && (
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Network Sovereignty</p>
+                    <div className="flex flex-wrap gap-2">
+                      {finding.source_ips.map((ip) => (
+                        <div key={ip} className="flex items-center gap-2 text-[11px] font-bold text-zinc-300 bg-white/[0.03] border border-white/[0.06] px-3 py-1.5 rounded-xl mono-data hover:bg-white/[0.06] transition-colors">
+                          <Globe className="w-3.5 h-3.5 text-cyan-400 opacity-60" />
+                          {ip}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          </motion.div>
-        )}
+
+              {finding.mitre_techniques?.length && (
+                <div>
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">MITRE ATT&CK Matrix Mapping</p>
+                  <div className="flex flex-wrap gap-3">
+                    {finding.mitre_techniques.map((t) => (
+                      <a
+                        key={t}
+                        href={`https://attack.mitre.org/techniques/${t.replace(".", "/")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 text-[10px] font-black text-primary bg-primary/10 border border-primary/20 px-4 py-2 hover:bg-primary/20 transition-all rounded-2xl group/link shadow-lg shadow-primary/5"
+                      >
+                        <span className="mono-data">{t}</span>
+                        <ExternalLink className="w-3 h-3 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {anomalyScore !== undefined && (
+                <div>
+                  <div className="flex items-center justify-between mb-3 px-1">
+                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Neural Anomaly Heuristics</p>
+                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{finding.ml_method || "Sentinel-ISO"}</span>
+                  </div>
+                  <div className="flex items-center gap-6 bg-white/[0.02] border border-white/[0.04] p-4 rounded-3xl">
+                    <div className="flex-1 h-3 bg-zinc-950 border border-white/[0.05] overflow-hidden rounded-full p-0.5">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${anomalyScore * 100}%` }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                        className={cn(
+                          "h-full rounded-full shadow-[0_0_15px_rgba(37,99,235,0.4)]",
+                          anomalyScore >= 0.8 ? "bg-red-500" : anomalyScore >= 0.5 ? "bg-primary" : "bg-cyan-500"
+                        )}
+                      />
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                       <p className="text-2xl font-black text-white mono-data">{(anomalyScore * 100).toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {finding.details && Object.keys(finding.details).length > 0 && (
+                <details className="group">
+                  <summary className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.5em] cursor-pointer hover:text-primary transition-all flex items-center gap-3 py-4 border-t border-white/[0.02] list-none">
+                    <div className="w-2 h-2 rounded-full border border-zinc-700 bg-zinc-900 group-open:bg-primary group-open:border-primary transition-colors" />
+                    Tactical JSON Core Breakdown
+                  </summary>
+                  <div className="mt-4 relative group/code bg-black/40 rounded-3xl p-6 border border-white/[0.04]">
+                      <pre className="text-[11px] text-zinc-400 overflow-x-auto scrollbar-thin max-h-96 mono-data leading-relaxed">
+                        {JSON.stringify(finding.details, null, 2)}
+                      </pre>
+                  </div>
+                </details>
+              )}
+          </div>
+        </motion.div>
+      )}
       </AnimatePresence>
-    </motion.div>
+    </motion.article>
   )
 }

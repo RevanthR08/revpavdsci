@@ -22,18 +22,18 @@ interface ChainCardProps {
 }
 
 const phaseColors: Record<string, string> = {
-  "credential-access": "bg-red-500",
-  "initial-access": "bg-orange-500",
-  "execution": "bg-yellow-500",
-  "privilege-escalation": "bg-purple-500",
-  "persistence": "bg-pink-500",
-  "defense-evasion": "bg-indigo-500",
-  "lateral-movement": "bg-blue-500",
-  "discovery": "bg-cyan-500",
-  "collection": "bg-teal-500",
-  "command-and-control": "bg-green-500",
-  "exfiltration": "bg-emerald-500",
-  "impact": "bg-rose-500",
+  "credential-access": "bg-red-500/20 text-red-300 border-red-500/35",
+  "initial-access": "bg-orange-500/20 text-orange-300 border-orange-500/35",
+  "execution": "bg-amber-500/20 text-amber-300 border-amber-500/35",
+  "privilege-escalation": "bg-violet-500/20 text-violet-300 border-violet-500/35",
+  "persistence": "bg-pink-500/20 text-pink-300 border-pink-500/35",
+  "defense-evasion": "bg-indigo-500/20 text-indigo-300 border-indigo-500/35",
+  "lateral-movement": "bg-cyan-500/20 text-cyan-300 border-cyan-500/35",
+  "discovery": "bg-sky-500/20 text-sky-300 border-sky-500/35",
+  "collection": "bg-teal-500/20 text-teal-300 border-teal-500/35",
+  "command-and-control": "bg-green-500/20 text-green-300 border-green-500/35",
+  "exfiltration": "bg-emerald-500/20 text-emerald-300 border-emerald-500/35",
+  "impact": "bg-rose-500/20 text-rose-300 border-rose-500/35",
 }
 
 export default function ChainCard({ chain, selected, onClick, index }: ChainCardProps) {
@@ -49,17 +49,15 @@ export default function ChainCard({ chain, selected, onClick, index }: ChainCard
       transition={{ duration: 0.3, delay: index * 0.05 }}
       onClick={onClick}
       className={cn(
-        "p-4 cursor-pointer transition-all duration-150 border",
+        "p-4 cursor-pointer transition-all duration-150 rounded-xl border panel-muted",
         selected
-          ? "bg-zinc-800 border-zinc-600"
-          : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+          ? "border-cyan-500/45 bg-cyan-500/10"
+          : "border-zinc-800 hover:border-zinc-700"
       )}
-      style={{ borderRadius: "6px" }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <User className="w-5 h-5 text-zinc-400" />
+          <User className="w-4 h-4 text-zinc-500" />
           <span className="text-base font-semibold text-white">
             {chain.affected_users[0] || "Unknown"}
           </span>
@@ -67,18 +65,19 @@ export default function ChainCard({ chain, selected, onClick, index }: ChainCard
             <span className="text-xs text-zinc-500">+{chain.affected_users.length - 1} more</span>
           )}
         </div>
-        <span className={cn("text-sm font-bold px-2.5 py-1", confidenceColor)} style={{ borderRadius: "4px" }}>
+        <span className={cn("text-sm font-bold px-2.5 py-1 rounded-full border", confidenceColor, "border-current/40") }>
           {Math.round(chain.chain_confidence * 100)}%
         </span>
       </div>
 
-      {/* Phases - max 3 visible */}
       <div className="flex items-center gap-1.5 flex-wrap mb-3">
         {chain.kill_chain_phases.slice(0, 3).map((phase, i) => (
           <React.Fragment key={phase}>
             <span
-              className={cn("text-[11px] font-semibold px-2 py-1 capitalize", phaseColors[phase] || "bg-zinc-600")}
-              style={{ borderRadius: "4px", color: "#ffffff" }}
+              className={cn(
+                "text-[11px] font-semibold px-2 py-1 capitalize border rounded",
+                phaseColors[phase] || "bg-zinc-700/40 text-zinc-300 border-zinc-600"
+              )}
             >
               {phase.replace("-", " ")}
             </span>
@@ -92,7 +91,6 @@ export default function ChainCard({ chain, selected, onClick, index }: ChainCard
         )}
       </div>
 
-      {/* Meta */}
       <div className="flex items-center gap-4 text-xs text-zinc-500">
         <span>{chain.affected_hosts.length} host{chain.affected_hosts.length !== 1 ? "s" : ""}</span>
         {chain.session_duration_minutes && (
@@ -103,18 +101,16 @@ export default function ChainCard({ chain, selected, onClick, index }: ChainCard
         )}
       </div>
 
-      {/* Confidence Bar */}
-      <div className="mt-3 h-1.5 bg-zinc-800 overflow-hidden" style={{ borderRadius: "3px" }}>
+      <div className="mt-3 h-1.5 bg-zinc-900 border border-zinc-800 overflow-hidden rounded">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${chain.chain_confidence * 100}%` }}
           transition={{ duration: 0.8, delay: index * 0.1 }}
           className={cn(
-            "h-full",
+            "h-full rounded",
             chain.chain_confidence >= 0.8 ? "bg-red-500" :
             chain.chain_confidence >= 0.5 ? "bg-orange-500" : "bg-yellow-500"
           )}
-          style={{ borderRadius: "3px" }}
         />
       </div>
     </motion.div>

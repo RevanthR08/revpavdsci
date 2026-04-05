@@ -1,5 +1,4 @@
-// Updated to use LogSentinal SOC Microservice — Root Endpoints
-const API_URL = "https://dscibackend-v1.onrender.com"
+const API_URL = "/api/proxy"
 const DEFAULT_USER_ID = "356721c8-1559-4c00-9aec-8be06d861028"
 
 export async function apiFetch(path: string, options?: RequestInit) {
@@ -116,6 +115,26 @@ export async function getScanTravels(id: string) {
  */
 export async function getScanSummary(id: string) {
   return apiFetch(`/scans/${id}/summary`)
+}
+
+/**
+ * POST /api/reports/generate
+ */
+export async function generateForensicReportPdf(payload: Record<string, any>) {
+  const res = await fetch("/api/reports/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: "Failed to generate report PDF" }))
+    throw new Error(error.detail || "Failed to generate report PDF")
+  }
+
+  return res
 }
 
 /**

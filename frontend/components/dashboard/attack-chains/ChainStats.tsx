@@ -35,10 +35,10 @@ function AnimatedValue({ value, suffix = "" }: { value: number; suffix?: string 
 }
 
 const baseStats = [
-  { key: "chains", label: "Total Chains", icon: GitBranch, color: "text-purple-400", bg: "bg-purple-500/10" },
-  { key: "confidence", label: "Avg Confidence", icon: TrendingUp, color: "text-blue-400", bg: "bg-blue-500/10" },
-  { key: "users", label: "Users Affected", icon: Users, color: "text-orange-400", bg: "bg-orange-500/10" },
-  { key: "phases", label: "Kill Phases", icon: Layers, color: "text-green-400", bg: "bg-green-500/10" },
+  { key: "chains", label: "Total Chains", icon: GitBranch, color: "text-cyan-300", bg: "bg-cyan-500/15 border-cyan-500/35" },
+  { key: "confidence", label: "Avg Confidence", icon: TrendingUp, color: "text-orange-300", bg: "bg-orange-500/15 border-orange-500/35" },
+  { key: "users", label: "Users Affected", icon: Users, color: "text-sky-300", bg: "bg-sky-500/15 border-sky-500/35" },
+  { key: "phases", label: "Kill Phases", icon: Layers, color: "text-emerald-300", bg: "bg-emerald-500/15 border-emerald-500/35" },
 ]
 
 export default function ChainStats({ totalChains, avgConfidence, totalUsers, totalPhases, totalTravels }: ChainStatsProps) {
@@ -52,11 +52,11 @@ export default function ChainStats({ totalChains, avgConfidence, totalUsers, tot
 
   const stats = [...baseStats]
   if (totalTravels !== undefined) {
-    stats.push({ key: "travels", label: "Travel Anomalies", icon: PlaneTakeoff, color: "text-red-400", bg: "bg-red-500/10" })
+    stats.push({ key: "travels", label: "Travel Anomalies", icon: PlaneTakeoff, color: "text-red-300", bg: "bg-red-500/15 border-red-500/35" })
   }
 
   return (
-    <div className={cn("grid gap-3", stats.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+    <div className={cn("grid gap-3", stats.length === 5 ? "grid-cols-2 lg:grid-cols-5" : "grid-cols-2 lg:grid-cols-4")}>
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
@@ -65,12 +65,11 @@ export default function ChainStats({ totalChains, avgConfidence, totalUsers, tot
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
-            className="bg-zinc-900 border border-zinc-800 p-4"
-            style={{ borderRadius: "6px" }}
+            className="panel-surface rounded-xl p-4"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.16em] mb-1">
                   {stat.label}
                 </p>
                 <AnimatedValue
@@ -78,7 +77,7 @@ export default function ChainStats({ totalChains, avgConfidence, totalUsers, tot
                   suffix={stat.key === "confidence" ? "%" : ""}
                 />
               </div>
-              <div className={cn("w-9 h-9 flex items-center justify-center", stat.bg)} style={{ borderRadius: "6px" }}>
+              <div className={cn("w-9 h-9 flex items-center justify-center rounded-md border", stat.bg)}>
                 <Icon className={cn("w-4 h-4", stat.color)} />
               </div>
             </div>

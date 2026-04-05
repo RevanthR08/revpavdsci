@@ -25,7 +25,7 @@ const nodeStyles: Record<string, { icon: typeof User; bg: string; border: string
   user: { icon: User, bg: "bg-blue-500/15", border: "border-blue-500/30", text: "text-blue-400" },
   host: { icon: Server, bg: "bg-green-500/15", border: "border-green-500/30", text: "text-green-400" },
   ip: { icon: Globe, bg: "bg-orange-500/15", border: "border-orange-500/30", text: "text-orange-400" },
-  service: { icon: Zap, bg: "bg-purple-500/15", border: "border-purple-500/30", text: "text-purple-400" },
+  service: { icon: Zap, bg: "bg-cyan-500/15", border: "border-cyan-500/30", text: "text-cyan-300" },
   process: { icon: Cpu, bg: "bg-yellow-500/15", border: "border-yellow-500/30", text: "text-yellow-400" },
 }
 
@@ -57,8 +57,7 @@ export default function ChainGraph({ nodes, edges }: ChainGraphProps) {
             className="flex items-center gap-3"
           >
             <div
-              className={cn("w-11 h-11 border flex items-center justify-center", style.bg, style.border)}
-              style={{ borderRadius: "6px" }}
+              className={cn("w-11 h-11 border flex items-center justify-center rounded-md", style.bg, style.border)}
             >
               <Icon className={cn("w-5 h-5", style.text)} />
             </div>
@@ -92,7 +91,7 @@ export default function ChainGraph({ nodes, edges }: ChainGraphProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
               >
-                <span className="text-xs font-medium px-2.5 py-1.5 bg-zinc-800 text-zinc-200 border border-zinc-700 inline-block" style={{ borderRadius: "4px" }}>
+                <span className="text-xs font-medium px-2.5 py-1.5 bg-zinc-800 text-zinc-200 border border-zinc-700 inline-block rounded">
                   {node.label}
                 </span>
               </motion.div>
@@ -137,8 +136,7 @@ export default function ChainGraph({ nodes, edges }: ChainGraphProps) {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.7 + i * 0.1 }}
-                  className={cn("flex items-center gap-2 px-3 py-2 border", style.bg, style.border)}
-                  style={{ borderRadius: "6px" }}
+                  className={cn("flex items-center gap-2 px-3 py-2 border rounded-md", style.bg, style.border)}
                 >
                   <Icon className={cn("w-4 h-4", style.text)} />
                   <span className="text-sm text-zinc-200">{node.label}</span>
